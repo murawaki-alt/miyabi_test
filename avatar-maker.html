@@ -512,14 +512,11 @@
             }
         }
 
-        // アバター生成（デモモード）
+        // アバター生成
         async function generateAvatars() {
             document.getElementById('loading').classList.add('active');
             document.getElementById('generateButton').disabled = true;
             document.getElementById('resultsSection').style.display = 'none';
-
-            // デモモード: モックデータを使用
-            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const resultsGrid = document.getElementById('resultsGrid');
             resultsGrid.innerHTML = '';
@@ -533,28 +530,70 @@
                 sketch: 'スケッチ風'
             };
 
-            // デモ画像（元画像を使用、実際のAPIではスタイル変換された画像が返る）
-            selectedStyles.forEach(style => {
-                const card = document.createElement('div');
-                card.className = 'result-card';
-                card.innerHTML = `
-                    <img src="${uploadedImage}" alt="${styleNames[style]}" class="result-image">
-                    <div class="result-footer">
-                        <p>${styleNames[style]}</p>
-                        <button class="download-button" onclick="downloadImage('${uploadedImage}', '${style}')">
-                            ダウンロード
-                        </button>
-                    </div>
-                `;
-                resultsGrid.appendChild(card);
-            });
+            const removeBackground = document.getElementById('removeBackground').checked;
 
-            document.getElementById('loading').classList.remove('active');
-            document.getElementById('generateButton').disabled = false;
-            document.getElementById('resultsSection').style.display = 'block';
+            try {
+                // API Keyが設定されている場合は実際のAPIを呼び出す
+                if (apiKey && apiKey.length > 0) {
+                    for (const style of selectedStyles) {
+                        try {
+                            // BytePlus APIを呼び出し
+                            const imageUrl = await callBytePlusAPI(uploadedImage, style, removeBackground);
 
-            // 履歴保存
-            saveToHistory();
+                            const card = document.createElement('div');
+                            card.className = 'result-card';
+                            card.innerHTML = `
+                                <img src="${imageUrl}" alt="${styleNames[style]}" class="result-image" crossorigin="anonymous">
+                                <div class="result-footer">
+                                    <p>${styleNames[style]}</p>
+                                    <button class="download-button" onclick="downloadImage('${imageUrl}', '${style}')">
+                                        ダウンロード
+                                    </button>
+                                </div>
+                            `;
+                            resultsGrid.appendChild(card);
+                        } catch (error) {
+                            // エラー時はエラーカードを表示
+                            const card = document.createElement('div');
+                            card.className = 'result-card';
+                            card.innerHTML = `
+                                <div style="padding: 2rem; text-align: center; color: #f5576c;">
+                                    <p>❌ ${styleNames[style]}</p>
+                                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">生成エラー</p>
+                                </div>
+                            `;
+                            resultsGrid.appendChild(card);
+                            console.error(`Error generating ${style}:`, error);
+                        }
+                    }
+                } else {
+                    // デモモード: API Key未設定時はモックデータを使用
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    selectedStyles.forEach(style => {
+                        const card = document.createElement('div');
+                        card.className = 'result-card';
+                        card.innerHTML = `
+                            <img src="${uploadedImage}" alt="${styleNames[style]}" class="result-image">
+                            <div class="result-footer">
+                                <p>${styleNames[style]} (デモ)</p>
+                                <button class="download-button" onclick="downloadImage('${uploadedImage}', '${style}')">
+                                    ダウンロード
+                                </button>
+                            </div>
+                        `;
+                        resultsGrid.appendChild(card);
+                    });
+                }
+
+                document.getElementById('resultsSection').style.display = 'block';
+                saveToHistory();
+            } catch (error) {
+                alert('アバター生成中にエラーが発生しました: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('generateButton').disabled = false;
+            }
         }
 
         // 画像ダウンロード
@@ -577,21 +616,46 @@
             localStorage.setItem('avatarHistory', JSON.stringify(history.slice(0, 10)));
         }
 
-        // 実際のBytePlus API連携はここに実装
-        // async function callBytePlusAPI(imageData, style) {
-        //     const response = await fetch('https://api.byteplus.com/...', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Authorization': `Bearer ${apiKey}`,
-        //             'Content-Type': 'application/json'
-        //         },
-        //         body: JSON.stringify({
-        //             image: imageData,
-        //             style: style
-        //         })
-        //     });
-        //     return await response.json();
-        // }
+        // BytePlus ModelArk API連携
+        async function callBytePlusAPI(imageData, style, removeBackground) {
+            // スタイルに応じたプロンプト生成
+            const stylePrompts = {
+                anime: 'anime style, vibrant colors, cartoon character',
+                illustration: 'illustration style, artistic, hand-drawn',
+                realistic: 'photorealistic, high detail, professional photo',
+                watercolor: 'watercolor painting style, soft colors, artistic',
+                popart: 'pop art style, bold colors, Andy Warhol inspired',
+                sketch: 'pencil sketch style, black and white, artistic drawing'
+            };
+
+            const prompt = `portrait photo in ${stylePrompts[style] || 'artistic style'}`;
+
+            try {
+                const response = await fetch('https://ark.ap-southeast.bytepluses.com/api/v3/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'seedream-3-0-t2i-250415',
+                        prompt: prompt,
+                        n: 1,
+                        size: '512x512'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                return result.data[0].url;
+            } catch (error) {
+                console.error('BytePlus API Error:', error);
+                throw error;
+            }
+        }
     </script>
 </body>
 </html>
