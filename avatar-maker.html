@@ -425,6 +425,17 @@
             document.getElementById('apiStatus').textContent = '✅ API Key設定済み';
         }
 
+        // 古い履歴データをクリア（容量節約）
+        try {
+            const history = localStorage.getItem('avatarHistory');
+            if (history && history.length > 50000) { // 50KB以上なら削除
+                localStorage.removeItem('avatarHistory');
+                console.log('大きすぎる履歴データをクリアしました');
+            }
+        } catch (e) {
+            localStorage.removeItem('avatarHistory');
+        }
+
         // API Key保存
         function saveApiKey() {
             const key = document.getElementById('apiKeyInput').value.trim();
@@ -604,16 +615,22 @@
             link.click();
         }
 
-        // 履歴保存
+        // 履歴保存（画像データは保存しない - 容量制限対策）
         function saveToHistory() {
-            const history = JSON.parse(localStorage.getItem('avatarHistory') || '[]');
-            history.unshift({
-                timestamp: new Date().toISOString(),
-                styles: Array.from(selectedStyles),
-                image: uploadedImage
-            });
-            // 最新10件のみ保存
-            localStorage.setItem('avatarHistory', JSON.stringify(history.slice(0, 10)));
+            try {
+                const history = JSON.parse(localStorage.getItem('avatarHistory') || '[]');
+                history.unshift({
+                    timestamp: new Date().toISOString(),
+                    styles: Array.from(selectedStyles)
+                    // 画像データは保存しない（LocalStorage容量節約）
+                });
+                // 最新5件のみ保存
+                localStorage.setItem('avatarHistory', JSON.stringify(history.slice(0, 5)));
+            } catch (error) {
+                // LocalStorage容量エラーの場合、履歴をクリア
+                console.warn('履歴保存エラー:', error);
+                localStorage.removeItem('avatarHistory');
+            }
         }
 
         // BytePlus ModelArk API連携 (SeedEdit 3.0 - Image to Image)
