@@ -1,25 +1,32 @@
-# my-project
+# AI Avatar Maker - BytePlus API
 
-Miyabi autonomous development project.
+写真から複数スタイルのAIアバターを生成するWebアプリケーションです。
 
-## Setup
+## 🎨 機能
 
-1. Set GitHub token:
-   ```bash
-   export GITHUB_TOKEN=ghp_xxx
-   ```
+- **画像アップロード**: ドラッグ&ドロップ対応
+- **複数スタイル選択**:
+  - 🎭 アニメ風
+  - 🖼️ イラスト風
+  - 📷 リアル写真風
+  - 🎨 水彩画風
+  - 💥 ポップアート風
+  - ✏️ スケッチ風
+- **生成結果の表示**: グリッド形式で見やすく表示
+- **画像ダウンロード機能**: 生成したアバターをダウンロード
+- **背景除去オプション**: チェックボックスで選択可能
+- **生成履歴の保存**: ブラウザのローカルストレージに保存（最新10件）
 
-2. Check status:
-   ```bash
-   miyabi status
-   ```
+## 🚀 使い方
 
-3. Run agent:
-   ```bash
-   miyabi agent coordinator --issue 1
-   ```
+### デモモード（API Key不要）
 
-## Documentation
+1. avatar-maker.html をブラウザで開く
+2. 画像をアップロード（クリックまたはドラッグ&ドロップ）
+3. スタイルを選択（複数選択可）
+4. 「アバターを生成する」ボタンをクリック
+5. 生成されたアバターをダウンロード
 
-- See `docs/` directory for detailed documentation
-- See `.claude/agents/specs/` for agent specifications
+**注意**: デモモードでは実際のスタイル変換は行われず、元画像が表示されます。
+
+🤖 Generated with Claude Code

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Avatar Maker - BytePlus API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* API Key設定 */
+        .api-config {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .api-config h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .api-input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .api-input-group input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .api-input-group button {
+            padding: 0.8rem 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .api-status {
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .api-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-status.disconnected {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* アップロードエリア */
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            background: #f8f9fa;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8eaf6;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        /* プレビュー */
+        .preview-section {
+            margin-bottom: 2rem;
+        }
+
+        .preview-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        /* スタイル選択 */
+        .style-selector {
+            margin-bottom: 2rem;
+        }
+
+        .style-selector h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .style-option {
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .style-option:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+        }
+
+        .style-option.selected {
+            border-color: #667eea;
+            background: #e8eaf6;
+        }
+
+        .style-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* オプション */
+        .options-section {
+            margin-bottom: 2rem;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkbox-option input {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 生成ボタン */
+        .generate-button {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-bottom: 2rem;
+        }
+
+        .generate-button:hover {
+            transform: translateY(-3px);
+        }
+
+        .generate-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 結果表示 */
+        .results-section {
+            margin-top: 2rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-card {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .result-footer {
+            padding: 1rem;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .download-button {
+            padding: 0.5rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* ローディング */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .api-input-group {
+                flex-direction: column;
+            }
+
+            .style-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 AI Avatar Maker</h1>
+            <p class="subtitle">BytePlus APIで写真から複数スタイルのアバターを生成</p>
+        </header>
+
+        <div class="main-content">
+            <!-- API設定 -->
+            <div class="api-config">
+                <h3>⚙️ API設定</h3>
+                <div class="api-input-group">
+                    <input type="password" id="apiKeyInput" placeholder="BytePlus API Key（未設定の場合はデモモード）">
+                    <button onclick="saveApiKey()">保存</button>
+                </div>
+                <div class="api-status disconnected" id="apiStatus">
+                    ℹ️ API Key未設定 - デモモードで動作します
+                </div>
+            </div>
+
+            <!-- アップロードエリア -->
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">クリックまたはドラッグ&ドロップで画像をアップロード</div>
+                <div class="upload-hint">JPG, PNG形式（最大10MB）</div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+
+            <!-- プレビュー -->
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h3>📷 アップロード画像</h3>
+                <img id="previewImage" class="preview-image" alt="Preview">
+            </div>
+
+            <!-- スタイル選択 -->
+            <div class="style-selector" id="styleSelector" style="display: none;">
+                <h3>🎨 スタイル選択</h3>
+                <div class="style-grid">
+                    <div class="style-option" data-style="anime" onclick="selectStyle('anime')">
+                        <div class="style-icon">🎭</div>
+                        <div>アニメ風</div>
+                    </div>
+                    <div class="style-option" data-style="illustration" onclick="selectStyle('illustration')">
+                        <div class="style-icon">🖼️</div>
+                        <div>イラスト風</div>
+                    </div>
+                    <div class="style-option" data-style="realistic" onclick="selectStyle('realistic')">
+                        <div class="style-icon">📷</div>
+                        <div>リアル写真風</div>
+                    </div>
+                    <div class="style-option" data-style="watercolor" onclick="selectStyle('watercolor')">
+                        <div class="style-icon">🎨</div>
+                        <div>水彩画風</div>
+                    </div>
+                    <div class="style-option" data-style="popart" onclick="selectStyle('popart')">
+                        <div class="style-icon">💥</div>
+                        <div>ポップアート風</div>
+                    </div>
+                    <div class="style-option" data-style="sketch" onclick="selectStyle('sketch')">
+                        <div class="style-icon">✏️</div>
+                        <div>スケッチ風</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- オプション -->
+            <div class="options-section" id="optionsSection" style="display: none;">
+                <h3>⚙️ オプション</h3>
+                <div class="checkbox-option">
+                    <input type="checkbox" id="removeBackground">
+                    <label for="removeBackground">背景を除去する</label>
+                </div>
+            </div>
+
+            <!-- 生成ボタン -->
+            <button class="generate-button" id="generateButton" onclick="generateAvatars()" style="display: none;">
+                アバターを生成する
+            </button>
+
+            <!-- ローディング -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AIがアバターを生成中...</p>
+            </div>
+
+            <!-- 結果 -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h3>✨ 生成結果</h3>
+                <div class="results-grid" id="resultsGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedImage = null;
+        let selectedStyles = new Set();
+        let apiKey = localStorage.getItem('byteplusApiKey') || null;
+
+        // API Key設定を読み込み
+        if (apiKey) {
+            document.getElementById('apiKeyInput').value = apiKey;
+            document.getElementById('apiStatus').className = 'api-status connected';
+            document.getElementById('apiStatus').textContent = '✅ API Key設定済み';
+        }
+
+        // API Key保存
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                localStorage.setItem('byteplusApiKey', key);
+                apiKey = key;
+                document.getElementById('apiStatus').className = 'api-status connected';
+                document.getElementById('apiStatus').textContent = '✅ API Key保存完了';
+            }
+        }
+
+        // ドラッグ&ドロップ
+        const uploadArea = document.getElementById('uploadArea');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // ファイル選択
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // ファイル処理
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('画像ファイルを選択してください');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('ファイルサイズは10MB以下にしてください');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImage = e.target.result;
+                document.getElementById('previewImage').src = uploadedImage;
+                document.getElementById('previewSection').style.display = 'block';
+                document.getElementById('styleSelector').style.display = 'block';
+                document.getElementById('optionsSection').style.display = 'block';
+                updateGenerateButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // スタイル選択
+        function selectStyle(style) {
+            const element = document.querySelector(`[data-style="${style}"]`);
+            if (selectedStyles.has(style)) {
+                selectedStyles.delete(style);
+                element.classList.remove('selected');
+            } else {
+                selectedStyles.add(style);
+                element.classList.add('selected');
+            }
+            updateGenerateButton();
+        }
+
+        // 生成ボタンの表示更新
+        function updateGenerateButton() {
+            const button = document.getElementById('generateButton');
+            if (uploadedImage && selectedStyles.size > 0) {
+                button.style.display = 'block';
+            } else {
+                button.style.display = 'none';
+            }
+        }
+
+        // アバター生成（デモモード）
+        async function generateAvatars() {
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('generateButton').disabled = true;
+            document.getElementById('resultsSection').style.display = 'none';
+
+            // デモモード: モックデータを使用
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = '';
+
+            const styleNames = {
+                anime: 'アニメ風',
+                illustration: 'イラスト風',
+                realistic: 'リアル写真風',
+                watercolor: '水彩画風',
+                popart: 'ポップアート風',
+                sketch: 'スケッチ風'
+            };
+
+            // デモ画像（元画像を使用、実際のAPIではスタイル変換された画像が返る）
+            selectedStyles.forEach(style => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+                    <img src="${uploadedImage}" alt="${styleNames[style]}" class="result-image">
+                    <div class="result-footer">
+                        <p>${styleNames[style]}</p>
+                        <button class="download-button" onclick="downloadImage('${uploadedImage}', '${style}')">
+                            ダウンロード
+                        </button>
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('generateButton').disabled = false;
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // 履歴保存
+            saveToHistory();
+        }
+
+        // 画像ダウンロード
+        function downloadImage(dataUrl, style) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `avatar-${style}-${Date.now()}.png`;
+            link.click();
+        }
+
+        // 履歴保存
+        function saveToHistory() {
+            const history = JSON.parse(localStorage.getItem('avatarHistory') || '[]');
+            history.unshift({
+                timestamp: new Date().toISOString(),
+                styles: Array.from(selectedStyles),
+                image: uploadedImage
+            });
+            // 最新10件のみ保存
+            localStorage.setItem('avatarHistory', JSON.stringify(history.slice(0, 10)));
+        }
+
+        // 実際のBytePlus API連携はここに実装
+        // async function callBytePlusAPI(imageData, style) {
+        //     const response = await fetch('https://api.byteplus.com/...', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Authorization': `Bearer ${apiKey}`,
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify({
+        //             image: imageData,
+        //             style: style
+        //         })
+        //     });
+        //     return await response.json();
+        // }
+    </script>
+</body>
+</html>
